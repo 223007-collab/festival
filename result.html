@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>おみくじ</title>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+    margin: 0;
+    font-family: sans-serif;
+    overflow: hidden;
+  }
+
+  /* 5x5のグリッドレイアウト */
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    width: 90vw;
+    max-width: 600px;
+    position: relative;
+  }
+
+  .card {
+    /* おみくじ画像の比率に合わせた設定（縦長） */
+    aspect-ratio: 1 / 2.8; 
+    perspective: 1000px;
+    cursor: pointer;
+  }
+
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+
+  /* タップされた札のピックアップと裏返し（z-indexとscaleで手前に拡大表示） */
+  .card.flipped {
+    z-index: 10;
+  }
+  .card.flipped .card-inner {
+    transform: rotateY(180deg) scale(1.6);
+  }
+
+  /* 1枚引いた後は他の札を少し暗くして操作無効化 */
+  .grid-container.active .card:not(.flipped) {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+
+  /* 札の裏面（初期状態）の設定：赤色ベースに指定画像を中央配置 */
+  .card-back {
+    background-color: #e60012; /* 赤色 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .card-back img {
+    width: 90%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  /* 札の表面（タップ後）の設定：結果の画像を枠内に収める */
+  .card-front {
+    background-color: #fdfaf2;
+    transform: rotateY(180deg);
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-container" id="grid"></div>
+
+<script>
+  // 表面にランダム表示させる画像配列
+  const fortuneImages = [
+    "茶系 和風 おみくじ A5文書 凶.png",
+    "茶系 和風 おみくじ A5文書 末吉.png",
+    "茶系 和風 おみくじ A5文書 小吉.png",
+    "茶系 和風 おみくじ A5文書 中吉.png",
+    "茶系 和風 おみくじ A5文書 大吉.png"
+  ];
+
+  // 裏面のデザイン指定画像
+  const logoImage = "4年D組_HR_伊東 日子_2026年9月15日のノート.jpg";
+  
+  const grid = document.getElementById('grid');
+  let isFlipped = false;
+
+  // 5x5 = 25枚の札を生成
+  for (let i = 0; i < 25; i++) {
+    const card = document.createElement('div');
+    card.classList.add('card');
+
+    const inner = document.createElement('div');
+    inner.classList.add('card-inner');
+
+    // 裏面要素の作成
+    const back = document.createElement('div');
+    back.classList.add('card-face', 'card-back');
+    const logo = document.createElement('img');
+    logo.src = logoImage;
+    back.appendChild(logo);
+
+    // 表面要素の作成
+    const front = document.createElement('div');
+    front.classList.add('card-face', 'card-front');
+
+    inner.appendChild(back);
+    inner.appendChild(front);
+    card.appendChild(inner);
+
+    // タップ時の処理
+    card.addEventListener('click', function() {
+      // 既に1枚引かれている場合は処理を中断
+      if (isFlipped) return;
+      isFlipped = true;
+      grid.classList.add('active');
+
+      // 5種類からランダムに1つ選択
+      const randomIndex = Math.floor(Math.random() * fortuneImages.length);
+      const selectedFortune = fortuneImages[randomIndex];
+      
+      // 選ばれた画像を表面の背景に設定
+      front.style.backgroundImage = `url('${selectedFortune}')`;
+
+      // アニメーション用のクラスを付与
+      this.classList.add('flipped');
+    });
+
+    grid.appendChild(card);
+  }
+</script>
+</body>
+</html>
