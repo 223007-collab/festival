@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>おみくじ結果</title>
+<title>おみくじ - 結果</title>
 <style>
+  /* === デザイン（CSS） === */
   body {
     display: flex;
     justify-content: center;
@@ -32,26 +33,23 @@
     margin-bottom: 20px;
   }
 
-  /* 結果のテキスト表示用 */
   #fortune-text-display {
     font-size: 32px;
     font-weight: bold;
-    color: #e60012; /* おみくじらしい赤色 */
+    color: #e60012;
     margin-bottom: 20px;
     letter-spacing: 2px;
   }
 
-  /* 画像のスタイル（縦長のおみくじ画像を画面に収める） */
   .fortune-image {
     width: 100%;
-    max-width: 250px; /* 画像が大きくなりすぎないように制限 */
+    max-width: 250px;
     height: auto;
     border-radius: 4px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     margin-bottom: 30px;
   }
 
-  /* もう一度引くボタン */
   .back-btn {
     display: inline-block;
     padding: 12px 30px;
@@ -73,37 +71,32 @@
 
 <div class="result-container">
   <h1>あなたの運勢は…</h1>
-  
-  <!-- テキストが差し替わる部分 -->
   <div id="fortune-text-display"></div>
-  
-  <!-- 画像が差し替わる部分 -->
   <img id="fortune-image" src="" alt="おみくじ結果" class="fortune-image">
-  
   <br>
-  <!-- index.htmlに戻るためのリンク -->
   <a href="index.html" class="back-btn">もう一度引く</a>
 </div>
 
 <script>
-  // 結果のバリエーション配列
-  const fortunes = ["大吉", "中吉", "小吉", "末吉", "凶"];
+  // === 動く仕組み（JavaScript） ===
+  document.addEventListener('DOMContentLoaded', () => {
+    const fortunes = ["大吉", "中吉", "小吉", "末吉", "凶"];
 
-  // 1. URLパラメータから結果を取得する（例: result.html?res=大吉）
-  const params = new URLSearchParams(window.location.search);
-  let result = params.get('res');
+    // URLのパラメータ (?res=大吉 など) を取得
+    const params = new URLSearchParams(window.location.search);
+    let result = params.get('res');
 
-  // 2. もしURLパラメータに正しい結果が含まれていなければ、ランダムに選ぶ
-  if (!result || !fortunes.includes(result)) {
-    const randomIndex = Math.floor(Math.random() * fortunes.length);
-    result = fortunes[randomIndex];
-  }
+    // パラメータがない場合はランダム
+    if (!result || !fortunes.includes(result)) {
+      const randomIndex = Math.floor(Math.random() * fortunes.length);
+      result = fortunes[randomIndex];
+    }
 
-  // 3. HTMLのテキストと画像を差し替える
-  document.getElementById('fortune-text-display').textContent = result;
-  // imgフォルダの中の該当画像をセット
-  document.getElementById('fortune-image').src = `img/${result}.png`;
-  document.getElementById('fortune-image').alt = `${result}の画像`;
+    // 画面にテキストと画像を表示
+    document.getElementById('fortune-text-display').textContent = result;
+    document.getElementById('fortune-image').src = `img/${result}.png`;
+    document.getElementById('fortune-image').alt = `${result}の画像`;
+  });
 </script>
 
 </body>
