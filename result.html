@@ -13,21 +13,26 @@
     background-color: #f0f0f0;
     margin: 0;
     font-family: sans-serif;
-    overflow: hidden;
+  }
+
+  /* 画面全体のレイアウトコンテナ */
+  .main-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   /* 5x5のグリッドレイアウト */
   .grid-container {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-    width: 90vw;
+    gap: 8px;
+    width: 95vw;
     max-width: 600px;
     position: relative;
   }
 
   .card {
-    /* おみくじ画像の比率に合わせた設定（縦長） */
     aspect-ratio: 1 / 2.8; 
     perspective: 1000px;
     cursor: pointer;
@@ -41,7 +46,7 @@
     transform-style: preserve-3d;
   }
 
-  /* タップされた札のピックアップと裏返し（z-indexとscaleで手前に拡大表示） */
+  /* タップされた札のピックアップと裏返し（手前に拡大表示） */
   .card.flipped {
     z-index: 10;
   }
@@ -49,7 +54,7 @@
     transform: rotateY(180deg) scale(1.6);
   }
 
-  /* 1枚引いた後は他の札を少し暗くして操作無効化 */
+  /* 1枚引いた後は他の札を少し暗くして操作を無効化 */
   .grid-container.active .card:not(.flipped) {
     opacity: 0.4;
     pointer-events: none;
@@ -65,9 +70,9 @@
     overflow: hidden;
   }
 
-  /* 札の裏面（初期状態）の設定：赤色ベースに指定画像を中央配置 */
+  /* 札の裏面：赤色ベースに指定画像を中央配置 */
   .card-back {
-    background-color: #e60012; /* 赤色 */
+    background-color: #e60012;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -78,7 +83,7 @@
     object-fit: contain;
   }
 
-  /* 札の表面（タップ後）の設定：結果の画像を枠内に収める */
+  /* 札の表面（タップ後）：結果の画像を全体に表示 */
   .card-front {
     background-color: #fdfaf2;
     transform: rotateY(180deg);
@@ -86,29 +91,63 @@
     background-position: center;
     background-repeat: no-repeat;
   }
+
+  /* リセットボタンのスタイル */
+  #reset-btn {
+    margin-top: 40px;
+    padding: 12px 40px;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    /* 初期状態は非表示 */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+
+  /* ボタン表示時のクラス */
+  #reset-btn.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  #reset-btn:hover {
+    background-color: #555;
+  }
 </style>
 </head>
 <body>
 
-<div class="grid-container" id="grid"></div>
+<div class="main-container">
+  <div class="grid-container" id="grid"></div>
+  <button id="reset-btn">リセット</button>
+</div>
 
 <script>
-  // 表面にランダム表示させる画像配列
+  // 表面にランダム表示させるファイル名
   const fortuneImages = [
-    "茶系 和風 おみくじ A5文書 凶.png",
-    "茶系 和風 おみくじ A5文書 末吉.png",
-    "茶系 和風 おみくじ A5文書 小吉.png",
-    "茶系 和風 おみくじ A5文書 中吉.png",
-    "茶系 和風 おみくじ A5文書 大吉.png"
+    "大吉.png",
+    "中吉.png",
+    "小吉.png",
+    "末吉.png",
+    "凶.png"
   ];
 
-  // 裏面のデザイン指定画像
-  const logoImage = "4年D組_HR_伊東 日子_2026年9月15日のノート.jpg";
+  // 裏面のデザイン用ファイル名
+  const logoImage = "4年D組_HR_伊東 日子_2026年9月15日のノート_2.jpg";
   
   const grid = document.getElementById('grid');
+  const resetBtn = document.getElementById('reset-btn');
+  
   let isFlipped = false;
+  let currentFlippedCard = null; // めくられた札を記憶する変数
 
-  // 5x5 = 25枚の札を生成
+  // 縦5枚×横5枚 = 計25枚の札を生成
   for (let i = 0; i < 25; i++) {
     const card = document.createElement('div');
     card.classList.add('card');
@@ -131,11 +170,12 @@
     inner.appendChild(front);
     card.appendChild(inner);
 
-    // タップ時の処理
+    // タップ（クリック）時のイベント処理
     card.addEventListener('click', function() {
-      // 既に1枚引かれている場合は処理を中断
+      // 既に1枚引かれている場合は処理しない
       if (isFlipped) return;
       isFlipped = true;
+      currentFlippedCard = this; // めくった札を保存
       grid.classList.add('active');
 
       // 5種類からランダムに1つ選択
@@ -145,12 +185,40 @@
       // 選ばれた画像を表面の背景に設定
       front.style.backgroundImage = `url('${selectedFortune}')`;
 
-      // アニメーション用のクラスを付与
+      // 反転と拡大のアニメーションを開始
       this.classList.add('flipped');
+
+      // アニメーション完了（約0.6秒）後にリセットボタンを表示
+      setTimeout(() => {
+        resetBtn.classList.add('show');
+      }, 600);
     });
 
     grid.appendChild(card);
   }
+
+  // リセットボタンが押された時の処理
+  resetBtn.addEventListener('click', function() {
+    if (!isFlipped || !currentFlippedCard) return;
+
+    // リセットボタンを非表示にする
+    resetBtn.classList.remove('show');
+
+    // 札を裏返しに戻し、他の札の暗転を解除する
+    currentFlippedCard.classList.remove('flipped');
+    grid.classList.remove('active');
+
+    // 札が裏返るアニメーションが終わるのを待ってから状態を完全リセット
+    setTimeout(() => {
+      // 表面の画像を消去
+      const front = currentFlippedCard.querySelector('.card-front');
+      front.style.backgroundImage = '';
+      
+      // 状態を初期化して再度引けるようにする
+      isFlipped = false;
+      currentFlippedCard = null;
+    }, 600);
+  });
 </script>
 </body>
 </html>
