@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>おみくじ</title>
+<title>おみくじ結果</title>
 <style>
   body {
     display: flex;
@@ -12,213 +12,99 @@
     min-height: 100vh;
     background-color: #f0f0f0;
     margin: 0;
-    font-family: sans-serif;
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
   }
 
-  /* 画面全体のレイアウトコンテナ */
-  .main-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  /* 5x5のグリッドレイアウト */
-  .grid-container {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-    width: 95vw;
-    max-width: 600px;
-    position: relative;
-  }
-
-  .card {
-    aspect-ratio: 1 / 2.8; 
-    perspective: 1000px;
-    cursor: pointer;
-  }
-
-  .card-inner {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
-    transform-style: preserve-3d;
-  }
-
-  /* タップされた札のピックアップと裏返し（手前に拡大表示） */
-  .card.flipped {
-    z-index: 10;
-  }
-  .card.flipped .card-inner {
-    transform: rotateY(180deg) scale(1.6);
-  }
-
-  /* 1枚引いた後は他の札を少し暗くして操作を無効化 */
-  .grid-container.active .card:not(.flipped) {
-    opacity: 0.4;
-    pointer-events: none;
-  }
-
-  .card-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 4px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    overflow: hidden;
-  }
-
-  /* 札の裏面：赤色ベースに指定画像を中央配置 */
-  .card-back {
-    background-color: #e60012;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .card-back img {
-    width: 90%;
-    height: auto;
-    object-fit: contain;
-  }
-
-  /* 札の表面（タップ後）：結果の画像を全体に表示 */
-  .card-front {
+  .result-container {
+    text-align: center;
     background-color: #fdfaf2;
-    transform: rotateY(180deg);
-    background-size: 100% 100%;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-
-  /* リセットボタンのスタイル */
-  #reset-btn {
-    margin-top: 40px;
-    padding: 12px 40px;
-    font-size: 18px;
-    font-weight: bold;
-    background-color: #333;
-    color: white;
-    border: none;
+    padding: 30px 20px;
     border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    /* 初期状態は非表示 */
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    width: 90vw;
+    max-width: 400px;
   }
 
-  /* ボタン表示時のクラス */
-  #reset-btn.show {
-    opacity: 1;
-    pointer-events: auto;
+  h1 {
+    color: #333;
+    margin-top: 0;
+    font-size: 24px;
+    margin-bottom: 20px;
   }
-  
-  #reset-btn:hover {
+
+  /* 結果のテキスト表示用 */
+  #fortune-text-display {
+    font-size: 32px;
+    font-weight: bold;
+    color: #e60012; /* おみくじらしい赤色 */
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+  }
+
+  /* 画像のスタイル（縦長のおみくじ画像を画面に収める） */
+  .fortune-image {
+    width: 100%;
+    max-width: 250px; /* 画像が大きくなりすぎないように制限 */
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    margin-bottom: 30px;
+  }
+
+  /* もう一度引くボタン */
+  .back-btn {
+    display: inline-block;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: #333;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+  }
+
+  .back-btn:hover {
     background-color: #555;
   }
 </style>
 </head>
 <body>
 
-<div class="main-container">
-  <div class="grid-container" id="grid"></div>
-  <button id="reset-btn">リセット</button>
+<div class="result-container">
+  <h1>あなたの運勢は…</h1>
+  
+  <!-- テキストが差し替わる部分 -->
+  <div id="fortune-text-display"></div>
+  
+  <!-- 画像が差し替わる部分 -->
+  <img id="fortune-image" src="" alt="おみくじ結果" class="fortune-image">
+  
+  <br>
+  <!-- index.htmlに戻るためのリンク -->
+  <a href="index.html" class="back-btn">もう一度引く</a>
 </div>
 
 <script>
-  // 表面にランダム表示させるファイル名
-  const fortuneImages = [
-    "大吉.png",
-    "中吉.png",
-    "小吉.png",
-    "末吉.png",
-    "凶.png"
-  ];
+  // 結果のバリエーション配列
+  const fortunes = ["大吉", "中吉", "小吉", "末吉", "凶"];
 
-  // 裏面のデザイン用ファイル名
-  const logoImage = "4年D組_HR_伊東 日子_2026年9月15日のノート_2.jpg";
-  
-  const grid = document.getElementById('grid');
-  const resetBtn = document.getElementById('reset-btn');
-  
-  let isFlipped = false;
-  let currentFlippedCard = null; // めくられた札を記憶する変数
+  // 1. URLパラメータから結果を取得する（例: result.html?res=大吉）
+  const params = new URLSearchParams(window.location.search);
+  let result = params.get('res');
 
-  // 縦5枚×横5枚 = 計25枚の札を生成
-  for (let i = 0; i < 25; i++) {
-    const card = document.createElement('div');
-    card.classList.add('card');
-
-    const inner = document.createElement('div');
-    inner.classList.add('card-inner');
-
-    // 裏面要素の作成
-    const back = document.createElement('div');
-    back.classList.add('card-face', 'card-back');
-    const logo = document.createElement('img');
-    logo.src = logoImage;
-    back.appendChild(logo);
-
-    // 表面要素の作成
-    const front = document.createElement('div');
-    front.classList.add('card-face', 'card-front');
-
-    inner.appendChild(back);
-    inner.appendChild(front);
-    card.appendChild(inner);
-
-    // タップ（クリック）時のイベント処理
-    card.addEventListener('click', function() {
-      // 既に1枚引かれている場合は処理しない
-      if (isFlipped) return;
-      isFlipped = true;
-      currentFlippedCard = this; // めくった札を保存
-      grid.classList.add('active');
-
-      // 5種類からランダムに1つ選択
-      const randomIndex = Math.floor(Math.random() * fortuneImages.length);
-      const selectedFortune = fortuneImages[randomIndex];
-      
-      // 選ばれた画像を表面の背景に設定
-      front.style.backgroundImage = `url('${selectedFortune}')`;
-
-      // 反転と拡大のアニメーションを開始
-      this.classList.add('flipped');
-
-      // アニメーション完了（約0.6秒）後にリセットボタンを表示
-      setTimeout(() => {
-        resetBtn.classList.add('show');
-      }, 600);
-    });
-
-    grid.appendChild(card);
+  // 2. もしURLパラメータに正しい結果が含まれていなければ、ランダムに選ぶ
+  if (!result || !fortunes.includes(result)) {
+    const randomIndex = Math.floor(Math.random() * fortunes.length);
+    result = fortunes[randomIndex];
   }
 
-  // リセットボタンが押された時の処理
-  resetBtn.addEventListener('click', function() {
-    if (!isFlipped || !currentFlippedCard) return;
-
-    // リセットボタンを非表示にする
-    resetBtn.classList.remove('show');
-
-    // 札を裏返しに戻し、他の札の暗転を解除する
-    currentFlippedCard.classList.remove('flipped');
-    grid.classList.remove('active');
-
-    // 札が裏返るアニメーションが終わるのを待ってから状態を完全リセット
-    setTimeout(() => {
-      // 表面の画像を消去
-      const front = currentFlippedCard.querySelector('.card-front');
-      front.style.backgroundImage = '';
-      
-      // 状態を初期化して再度引けるようにする
-      isFlipped = false;
-      currentFlippedCard = null;
-    }, 600);
-  });
+  // 3. HTMLのテキストと画像を差し替える
+  document.getElementById('fortune-text-display').textContent = result;
+  // imgフォルダの中の該当画像をセット
+  document.getElementById('fortune-image').src = `img/${result}.png`;
+  document.getElementById('fortune-image').alt = `${result}の画像`;
 </script>
+
 </body>
 </html>
